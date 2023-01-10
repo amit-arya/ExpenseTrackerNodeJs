@@ -2,34 +2,30 @@ async function login(e){
     e.preventDefault();
 
     const loginDetails = {
-        name: e.target.name.value,
+        email: e.target.email.value,
         password: e.target.password.value
     }
 
-    let flag = false;
-
-    await axios.get("http://localhost:8080/get-users")
+    await axios.get("http://localhost:8080/get-users", loginDetails)
     .then((response)=>{
         for(let i=0;i<response.data.users.length;i++){
             if(response.data.users[i].email==loginDetails.email){
                 if(response.data.users[i].password==loginDetails.password){
-                    flag = true;
+                    document.body.innerHTML += `<div style="color:blue">
+                    Logged in successfully</div>`;
                 }
                 else{
-                    console.log('password does not match');
+                    document.body.innerHTML += `<div style="color:red">
+                     Password does not match, try again</div>`;
                 }
                 break;
             }
         }
-
-        if(flag){
-            console.log('User found');
-        }
-        else{
-            console.log('User not found');
-        }
+        // document.body.innerHTML += `<div style="color:blue">
+        //              Logged in successfully</div>`;
     })
     .catch(err => {
-        console.log(`some error occured ${err}`);
+        console.log(`${err}:<div style="color:red">
+        User Not Found</div>`);
     })
 }
