@@ -14,7 +14,7 @@ app.use(cors());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
-app.post('/user/signup', async (req, res, next) => {
+app.post('/user/signup', async (req, res) => {
     try {
         const name = req.body.name;
         const email = req.body.email;
@@ -22,8 +22,19 @@ app.post('/user/signup', async (req, res, next) => {
 
         const user = await User.create({ name: name, email: email, password: password });
         res.status(201).json({ newUser: user });
-    }catch(err){
-        res.status(500).json({ error:err });
+    } catch (err) {
+        res.status(500).json({ error: err });
+    }
+})
+
+app.get('/get-users', async (req, res) => {
+    try {
+        // const email = req.body.email;
+        // const password = req.body.password;
+        const users = await User.findAll();
+        res.status(200).json({ users });
+    } catch (err) {
+        res.status(500).json({ error: err });
     }
 })
 
