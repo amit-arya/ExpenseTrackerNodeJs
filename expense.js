@@ -16,7 +16,8 @@ async function expense(e){
 }
 
 window.addEventListener("DOMContentLoaded", async()=>{
-    await axios.get("http://localhost:8080/get-expenses")
+    const token = localStorage.getItem('token');
+    await axios.get("http://localhost:8080/get-expenses",{ headers: {"Authorization":token }})
     .then((response)=>{
         for(let i=0;i<response.data.expenses.length;i++){
             showExpenseOnScreen(response.data.expenses[i]);
