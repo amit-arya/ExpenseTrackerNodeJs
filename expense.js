@@ -17,7 +17,32 @@ async function expense(e) {
         })
 }
 
+function parseJwt (token) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+}
+
+function showPremuimUser(){
+    document.getElementById('rzp-btn').remove();
+    const premiumUser = document.getElementById('premiumUser');
+    premiumUser.innerHTML += `<div style="color:blue">
+    You are a Premium user now</div>`;
+}
+
 window.addEventListener("DOMContentLoaded", async () => {
+    const token = localStorage.getItem('token');
+    const decodeToken = parseJwt(token);
+    const ispremiumuser = decodeToken.ispremiumuser;
+
+    if(ispremiumuser){
+        showPremuimUser();
+        showLeaderBoard();
+    }
     await axios.get("http://localhost:8080/get-expenses", { headers: { "Authorization": token } })
         .then((response) => {
             for (let i = 0; i < response.data.expenses.length; i++) {
@@ -32,7 +57,6 @@ window.addEventListener("DOMContentLoaded", async () => {
 function showExpenseOnScreen(expense) {
     const parentNode = document.getElementById('expenses');
     const childNode = `<li id= ${expense.id}> ${expense.amount} - ${expense.desc} - ${expense.category}
-    <button onclick=editExpense('${expense.id}')> Edit </button>
     <button onclick=deleteExpense('${expense.id}')> Delete </button> </li>`;
 
     parentNode.innerHTML += childNode;
@@ -63,17 +87,16 @@ document.getElementById('rzp-btn').onclick = async function (e) {
         "key": response.data.key_id,
         "order_id": response.data.order.id, // for one time payment
         "handler": async function (response) {
-            await axios.post('http://localhost:8080/purchase/updatetransactionstatus', {
+            const res= await axios.post('http://localhost:8080/purchase/updatetransactionstatus', {
                 order_id: options.order_id,
                 payment_id: response.razorpay_payment_id
             }, { headers: { "Authorization": token } })
 
-            document.getElementById('rzp-btn').remove();
-            const premiumUser = document.getElementById('premiumUser');
-            premiumUser.innerHTML += `<div style="color:blue">
-            You are a Premium user now</div>`;
+            showPremuimUser();
+            showLeaderBoard();
 
             alert('You are a Premium User now')
+            localStorage.setItem('token', res.data.token);
         },
     }
 
@@ -85,4 +108,25 @@ document.getElementById('rzp-btn').onclick = async function (e) {
         console.log(response);
         alert('Transaction failed');
     })
+}
+
+function showLeaderBoard(){
+    const inputelem = document.createElement('input');
+    inputelem.type = "button";
+    inputelem.value = 'Show Leaderboard';
+    inputelem.onclick = async() => {
+        const token = localStorage.getItem('token');
+        const userLeaderBoardArray = await axios.get('http://localhost:8080/premium/showLeaderBoard', 
+         { headers: {"Authorization" : token} })
+        
+         var leaderBoardElem = document.getElementById('leaderboard');
+         leaderBoardElem.innerHTML += `<h1> Leader Board</h1>`
+         
+         userLeaderBoardArray.data.forEach((userDetails)=>{
+            leaderBoardElem.innerHTML += `<li>Name - ${userDetails.name},
+             Total Expense - ${userDetails.total_expense || 0} </li>`
+         })
+    }
+
+    document.getElementById('premiumUser').appendChild(inputelem);
 }
