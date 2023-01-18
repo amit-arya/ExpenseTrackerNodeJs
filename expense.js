@@ -35,13 +35,13 @@ function showPremuimUser(){
 }
 
 window.addEventListener("DOMContentLoaded", async () => {
-    const token = localStorage.getItem('token');
     const decodeToken = parseJwt(token);
     const ispremiumuser = decodeToken.ispremiumuser;
 
     if(ispremiumuser){
         showPremuimUser();
         showLeaderBoard();
+        showDownloadBtn();
     }
     await axios.get("http://localhost:8080/get-expenses", { headers: { "Authorization": token } })
         .then((response) => {
@@ -56,7 +56,7 @@ window.addEventListener("DOMContentLoaded", async () => {
 
 function showExpenseOnScreen(expense) {
     const parentNode = document.getElementById('expenses');
-    const childNode = `<li id= ${expense.id}> ${expense.amount} - ${expense.desc} - ${expense.category}
+    const childNode = `<li id= ${expense.id}>${expense.date} - ${expense.desc} - ${expense.category} - ${expense.amount}
     <button onclick=deleteExpense('${expense.id}')> Delete </button> </li>`;
 
     parentNode.innerHTML += childNode;
@@ -80,7 +80,6 @@ function removeExpenseFromScreen(id) {
 }
 
 document.getElementById('rzp-btn').onclick = async function (e) {
-    const token = localStorage.getItem('token');
     const response = await axios.get('http://localhost:8080/purchase/premiummembership', { headers: { "Authorization": token } });
 
     var options = {
@@ -94,6 +93,7 @@ document.getElementById('rzp-btn').onclick = async function (e) {
 
             showPremuimUser();
             showLeaderBoard();
+            showDownloadBtn();
 
             alert('You are a Premium User now')
             localStorage.setItem('token', res.data.token);
@@ -129,4 +129,24 @@ function showLeaderBoard(){
     }
 
     document.getElementById('premiumUser').appendChild(inputelem);
+}
+
+function showDownloadBtn(){
+    premiumUser.innerHTML += `<button id="downloadReport">Download Report</button>`;
+    document.getElementById('downloadReport').onclick = function(e){
+        axios.get('http://localhost:8080/user/download', { headers: {'Authorization': token }})
+        .then((response)=>{
+            if(response.status===201){
+                var a = document.createElement("a");
+                a.href = response.data.fileUrl;
+                a.download = 'myexpense.csv';
+                a.click();
+            } else{
+                throw new Error(response.data.message);
+            }
+        })
+        .catch((err)=>{
+            console.log(err);
+        })
+    }
 }
