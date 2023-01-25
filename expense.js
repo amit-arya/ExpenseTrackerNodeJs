@@ -160,21 +160,26 @@ function expenseReports() {
     parentNode.innerHTML += `<h2>Your downloaded reports</h2>`;
     parentNode.innerHTML += `Rows per page:<select name="rows_per_page" id="rows_per_page"
      onchange="pageSelect()">
+    <option value="">Choose</option>
+    <option value="2">2</option>
     <option value="5">5</option>
     <option value="10">10</option>
-    <option value="15">15</option>
     </select>`
 
-    const limit = document.getElementById('rows_per_page').value;
-    pageSelect(1, limit);
+    changePage(1, 5);
 }
 
-function pageSelect(page, limit) {
-    console.log(page, limit)
+function pageSelect(){
+    const limit = document.getElementById('rows_per_page').value;
+    console.log(limit)
+    changePage(1, limit);
+}
+
+async function changePage(page, limit) {
     const parentNode = document.getElementById('reports');
     document.querySelectorAll('.reports').forEach(e => e.remove());
 
-    axios.get(`http://localhost:8080/premium/user/reports?page=${page}&limit=${limit}`,
+    await axios.get(`http://localhost:8080/premium/user/reports?page=${page}&limit=${limit}`,
         { headers: { 'Authorization': token } })
         .then((response) => {
             let currentIndex = (page - 1) * limit;
@@ -188,9 +193,11 @@ function pageSelect(page, limit) {
                 }
             }
 
+            //parentNode.innerHTML +=`<br>`
+
             if (Math.ceil(totalItems / limit) > 1) {
                 for (let i = 0; i < Math.ceil(totalItems / limit); i++) {
-                    let childNode = `<button class="reports" onclick=pageSelect('${i + 1}','${limit}')>
+                    let childNode = `<button class="reports" onclick=changePage('${i + 1}','${limit}')>
                     ${i + 1}</button>`
                     parentNode.innerHTML += childNode;
                 }
